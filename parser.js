@@ -23,7 +23,7 @@ const updateVersion = (version, updateType) => {
   return bytes.join('.');
 };
 
-const Parser = function(schemas) {
+const Parser = function(schemas = {}) {
   this.latest = new Map();
   this.schemas = this.buildSchemasIndex(schemas);
 };
@@ -57,6 +57,22 @@ Parser.prototype.getSchema = function(
   return versionedSchema;
 };
 
+Parser.prototype.addSchema = function(
+  schemaName,
+  schema,
+  version = DEFAULT_VERSION
+) {
+  const exists = this.schemas.has(schemaName);
+  if (exists) throw new Error(`Schema ${schemaName} already exists`);
+
+  const versions = new Map();
+  versions.set(version, schema);
+  versions.set(LATEST, schema);
+
+  this.schemas.set(schemaName, versions);
+  this.latest.set(schemaName, version);
+};
+
 Parser.prototype.updateSchema = function(
   schemaName,
   newSchema,
@@ -68,10 +84,11 @@ Parser.prototype.updateSchema = function(
   const latest = this.latest.get(schemaName);
   const newVersion = updateVersion(latest, updateType);
 
-  this.latest.set(schemaName, newVersion);
-
   schema.set(newVersion, newSchema);
   schema.set(LATEST, newSchema);
+
+  this.latest.set(schemaName, newVersion);
+  this.currentSchema = newSchema;
 };
 
 Parser.prototype.use = function(
