@@ -26,7 +26,7 @@ const buffer = parser.parse(
 
 const obj = parser.parse(buffer, 'schemaName');
 ```
-Or if you use one schema more times than others
+Or if you use one schema more frequently than others
 ```javascript
 parser.use('schemaName');
 const buffer = parser.parse({
@@ -55,9 +55,7 @@ You can easily update schemas without losing older ones. For version updating us
 ```javascript
 parser.updateSchema(
   schemaName,
-  newSchema, 
+  newSchema,
   updateType // 'major', 'minor' or 'patch'
 )
 ```
-
-
