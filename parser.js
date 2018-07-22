@@ -127,7 +127,13 @@ Parser.prototype._parseBuffer = function(
   for (const field in schema) {
     const size = schema[field];
 
-    if (typeof size === 'string') {
+    if (typeof size === 'function') {
+      const fn = size;
+      const len = fn(obj);
+      const data = buffer.slice(offset, offset + len);
+      obj[field] = data.toString();
+      offset += len;
+    } else if (typeof size === 'string') {
       const len = obj[size];
       const data = buffer.slice(offset, offset + len);
       obj[field] = data.toString();
@@ -150,24 +156,37 @@ Parser.prototype._parseObject = function(
   schema,
   data
 ) {
+  const getSize = ([field, size]) => {
+    if (typeof size === 'function') {
+      const fn = size;
+      return fn(data);
+    } else if (typeof size === 'string') {
+      return data[size];
+    } else {
+      return size;
+    }
+  };
+
   const bytes = Object
     .entries(schema)
-    .map(([field, size]) => typeof size === 'string'
-      ? data[size]
-      : size
-    );
+    .map(getSize);
 
-  const minLength = bytes.reduce((acc, cur) => acc += cur, 0);
-  const buffer = Buffer.alloc(minLength);
+  const length = bytes.reduce((acc, cur) => acc += cur, 0);
+  const buffer = Buffer.alloc(length);
   let offset = 0;
 
   for (const field in data) {
     const value = data[field];
-    const size = schema[field];
+    let size = schema[field];
+
+    if (typeof size === 'function') {
+      const fn = size;
+      size = fn(data);
+    }
 
     if (typeof size === 'string' || size > INT_32) {
       const string = value.toString();
-      offset = buffer.write(string, offset);
+      offset += buffer.write(string, offset);
     } else {
       offset = buffer.writeIntLE(value, offset, size);
     }
