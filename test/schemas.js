@@ -1,27 +1,27 @@
 module.exports = {
 
   handshake: {
-    version: 2,
-    status: 1,
-    reserved: 1,
-    token: 32
+    version: '2b',
+    status: '1b',
+    reserved: '1b',
+    token: '32b'
   },
 
   parcel: {
-    structType: 1,
-    parcelId: 4,
-    parcelType: 1,
-    compression: 1,
-    encoding: 1,
-    length: 8
+    structType: '1b',
+    parcelId: '4b',
+    parcelType: '1b',
+    compression: '1b',
+    encoding: '1b',
+    length: '8b'
   },
 
   chunk: {
-    structType: 1,
-    parcelId: 4,
-    chunkId: 4,
-    flags: 1,
-    length: 2,
+    structType: '1b',
+    parcelId: '4b',
+    chunkId: '4b',
+    flags: '1b',
+    length: '2b',
     payload: 'length'
   }
 

@@ -30,10 +30,24 @@ const Parser = function(schemas = {}) {
 
 module.exports = Parser;
 
+Parser.prototype.parseSchema = function(schema) {
+  const byteUnit = new RegExp(/[0-9]*b$/);
+
+  for (const field in schema) {
+    const value = schema[field];
+    if (typeof value !== 'string') continue;
+
+    if (value.match(byteUnit)) {
+      schema[field] = parseInt(value, '10');
+    }
+  }
+};
+
 Parser.prototype.buildSchemasIndex = function(schemas) {
   const entries = Object.entries(schemas);
 
   schemas = entries.map(([name, schema]) => {
+    this.parseSchema(schema);
     const version = DEFAULT_VERSION;
     const versions = new Map([[version, schema]]);
     versions.set(LATEST, schema);
@@ -66,6 +80,7 @@ Parser.prototype.addSchema = function(
   if (exists) throw new Error(`Schema ${schemaName} already exists`);
 
   const versions = new Map();
+  this.parseSchema(schema);
   versions.set(version, schema);
   versions.set(LATEST, schema);
 
@@ -84,6 +99,7 @@ Parser.prototype.updateSchema = function(
   const latest = this.latest.get(schemaName);
   const newVersion = updateVersion(latest, updateType);
 
+  this.parseSchema(newSchema);
   schema.set(newVersion, newSchema);
   schema.set(LATEST, newSchema);
 

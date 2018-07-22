@@ -83,9 +83,9 @@ const usingOlderSchema = () => {
 
 const withAddedSchema = () => {
   const schema = {
-    id: 2,
-    dataId: 4,
-    length: 4
+    id: '2b',
+    dataId: '4b',
+    length: '4b'
   };
 
   parser.addSchema('packet', schema, '0.0.1');
@@ -105,8 +105,8 @@ const withAddedSchema = () => {
 
 const withVariables = () => {
   const schema = {
-    id: 4,
-    length: 4,
+    id: '4b',
+    length: '4b',
     data: 'length'
   };
 
@@ -127,8 +127,8 @@ const withVariables = () => {
 
 const withFunctions = () => {
   const schema = {
-    id: 4,
-    length: 8,
+    id: '4b',
+    length: '8b',
     payload: obj => parseInt(obj.length, '10')
   };
 
@@ -171,10 +171,10 @@ const getUnknownSchema = () => {
 
 const addExistingSchema = () => {
   const schema = {
-    version: 2,
-    status: 1,
-    reserved: 1,
-    token: 4
+    version: '2b',
+    status: '1b',
+    reserved: '1b',
+    token: '4b'
   };
 
   try {
