@@ -1,4 +1,8 @@
 # SchemaParser
+
+[![NPM VERSION](https://badge.fury.io/js/schemaparser.svg)](https://badge.fury.io/js/schemaparser)
+[![NPM DOWNLOADS](https://img.shields.io/npm/dt/schemaparser.svg)](https://www.npmjs.com/package/schemaparser)
+
 Parse data into buffer and back using multiversional binary schema
 ___
 # Example
