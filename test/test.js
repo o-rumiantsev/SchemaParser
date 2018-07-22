@@ -125,6 +125,28 @@ const withVariables = () => {
   console.log('Using schema with variables: OK');
 };
 
+const withFunctions = () => {
+  const schema = {
+    id: 4,
+    length: 8,
+    payload: obj => parseInt(obj.length, '10')
+  };
+
+  parser.addSchema('dynamicData', schema);
+
+  const data = {
+    id: 1,
+    length: '00000010',
+    payload: 'Hello bro!'
+  };
+
+  const dataBuffer = parser.parse(data, 'dynamicData');
+  const dataParsed = parser.parse(dataBuffer, 'dynamicData');
+
+  check(data, dataParsed);
+  console.log('Using schema with functions: OK');
+};
+
 const getUnknownSchema = () => {
   let schemaName = 'Unknown';
   let version = '1.0.0';
@@ -187,6 +209,7 @@ withSchemaUpdate();
 usingOlderSchema();
 withAddedSchema();
 withVariables();
+withFunctions();
 
 getUnknownSchema();
 addExistingSchema();
