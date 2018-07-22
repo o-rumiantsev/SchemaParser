@@ -26,32 +26,35 @@ const updateVersion = (version, updateType) => {
 const Parser = function(schemas = {}) {
   this.latest = new Map();
   this.schemas = this.buildSchemasIndex(schemas);
+  this.currentSchema = null;
 };
 
 module.exports = Parser;
 
 Parser.prototype.parseSchema = function(schema) {
-  const byteUnit = new RegExp(/[0-9]*b$/);
+  const byteUnit = /[0-9]*b$/;
 
   for (const field in schema) {
     const value = schema[field];
     if (typeof value !== 'string') continue;
 
     if (value.match(byteUnit)) {
-      schema[field] = parseInt(value, '10');
+      schema[field] = parseInt(value, '10'); // FIXME: change external reference variable
     }
   }
 };
 
 Parser.prototype.buildSchemasIndex = function(schemas) {
-  const entries = Object.entries(schemas);
+  const entries = Object.entries(schemas); // TODO: entries value name
 
   schemas = entries.map(([name, schema]) => {
     this.parseSchema(schema);
-    const version = DEFAULT_VERSION;
-    const versions = new Map([[version, schema]]);
-    versions.set(LATEST, schema);
-    this.latest.set(name, version);
+    this.latest.set(name, DEFAULT_VERSION);
+
+    const versions = new Map([
+      [DEFAULT_VERSION, schema],
+      [LATEST, schema]
+    ]);
     return [name, versions];
   });
 
@@ -79,10 +82,11 @@ Parser.prototype.addSchema = function(
   const exists = this.schemas.has(schemaName);
   if (exists) throw new Error(`Schema ${schemaName} already exists`);
 
-  const versions = new Map();
   this.parseSchema(schema);
-  versions.set(version, schema);
-  versions.set(LATEST, schema);
+  const versions = new Map([
+    [version, schema],
+    [LATEST, schema]
+  ]);
 
   this.schemas.set(schemaName, versions);
   this.latest.set(schemaName, version);
@@ -95,7 +99,11 @@ Parser.prototype.updateSchema = function(
 ) {
   const schema = this.schemas.get(schemaName);
   if (!schema) throw new Error('Unknown schema');
-
+  // TODO: It's not a fact that the schema that is being
+  // added will be the last, since, perhaps the user wants
+  // to upgrade: 5.2.2 => 5.2.3.
+  // Although the latest version is now: 6.0.1.
+  // So, perhaps it's worth adding the ability to upgrade not only the latest version
   const latest = this.latest.get(schemaName);
   const newVersion = updateVersion(latest, updateType);
 
@@ -125,32 +133,34 @@ Parser.prototype.parse = function(
   if (!schemaName) {
     schema = this.currentSchema;
   } else {
+    // TODO: if (!version) {...}
     schema = this.getSchema(schemaName, version);
   }
 
-  return data instanceof Buffer
-    ? this._parseBuffer(schema, data)
-    : this._parseObject(schema, data);
+  return data instanceof Buffer ? this._parseBuffer(schema, data) :
+    this._parseObject(schema, data);
 };
 
 Parser.prototype._parseBuffer = function(
   schema,
   buffer
 ) {
-  const obj = {};
+  const obj = {}; // TODO: name
   let offset = 0;
 
   for (const field in schema) {
     const size = schema[field];
 
     if (typeof size === 'function') {
+      // TODO: we can do it in Parser.prototype.parseSchema
       const fn = size;
-      const len = fn(obj);
-      const data = buffer.slice(offset, offset + len);
+      const len = fn(obj); // FIXME: may not be a number (parse)
+      const data = buffer.slice(offset, offset + len); // TODO: len < INT_32
       obj[field] = data.toString();
       offset += len;
     } else if (typeof size === 'string') {
       const len = obj[size];
+      // FIXME: if (!len) {...}
       const data = buffer.slice(offset, offset + len);
       obj[field] = data.toString();
       offset += len;
@@ -172,7 +182,8 @@ Parser.prototype._parseObject = function(
   schema,
   data
 ) {
-  const getSize = ([field, size]) => {
+  const getSize = ([_, size]) => {
+    // TODO: Validation!
     if (typeof size === 'function') {
       const fn = size;
       return fn(data);
@@ -187,7 +198,7 @@ Parser.prototype._parseObject = function(
     .entries(schema)
     .map(getSize);
 
-  const length = bytes.reduce((acc, cur) => acc += cur, 0);
+  const length = bytes.reduce((acc, cur) => acc += cur);
   const buffer = Buffer.alloc(length);
   let offset = 0;
 
