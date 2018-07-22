@@ -42,16 +42,23 @@ const buffer = parser.parse({
 Schemas specify size(in bytes) for appropriate fields in objects. So this schema
 ```javascript
 {
-  packetType: 1,
-  packetId: 4,
-  payloadLength: 4,
+  packetType: '1b',
+  packetId: '4b',
+  payloadLength: '4b',
   payload: 'payloadLength'
 }
 ```
-defines that packetType needs 1 byte, packetId - 4, payloadLength - 4 and payload needs `<object to parse>.payloadLength` bytes.
-
+defines that packetType needs 1 byte, packetId - 4, payloadLength - 4 and payload needs `<object to parse>.payloadLength` bytes. It is recommended to define static size with string, like `field: 'Nb'`, but you can specify it with a number `field: N`. You can also use functions to declare the behavior of the field's size depending on object to parse. For example:
+```javascript
+{
+  id: '2b',
+  length: '8b',
+  payload: obj => parseInt(obj.length, '10')
+}
+```
 
 Parser supports multiple named schemas with multuiple versions. Default version is `1.0.0`.
+NOTE: if field's size is greater than 4 bytes(more than Int32), it should be passed within a parser as a string.
 
 
 #### Versions
