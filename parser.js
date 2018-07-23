@@ -97,24 +97,48 @@ Parser.prototype.addSchema = function(
 Parser.prototype.updateSchema = function(
   schemaName,
   newSchema,
+  previousVersion,
   updateType // major, minor or patch
 ) {
   const schema = this.schemas.get(schemaName);
   if (!schema) throw new Error('Unknown schema');
-  // TODO: It's not a fact that the schema that is being
-  // added will be the last, since, perhaps the user wants
-  // to upgrade: 5.2.2 => 5.2.3.
-  // Although the latest version is now: 6.0.1.
-  // So, perhaps it's worth adding the ability to upgrade not only the latest version
-  const latest = this.latest.get(schemaName);
-  const newVersion = updateVersion(latest, updateType);
-
   const parsedNewSchema = this.parseSchema(newSchema);
-  schema.set(newVersion, parsedNewSchema);
-  schema.set(LATEST, parsedNewSchema);
+  const latestVersion = this.latest.get(schemaName);
+  if (!updateType) {
+    updateType = previousVersion;
+    const newVersion = updateVersion(latestVersion, updateType);
+    schema.set(LATEST, parsedNewSchema);
+    schema.set(newVersion, parsedNewSchema);
+    this.latest.set(schemaName, newVersion);
+  } else if (previousVersion === latestVersion) {
+    const newVersion = updateVersion(previousVersion, updateType);
+    schema.set(LATEST, parsedNewSchema);
+    schema.set(newVersion, parsedNewSchema);
+    this.latest.set(schemaName, newVersion);
+  } else if (!schema.has(previousVersion)) {
+    throw new Error('Unknown version');
+  } else {
+    const newVersion = updateVersion(previousVersion, updateType);
+    if (schema.has(newVersion)) {
+      throw new Error('This version already exists');
+      // TODO: Perhaps we should not throw out the error,
+      // but overwrite the old scheme
+    }
+    schema.set(newVersion, parsedNewSchema);
+    const newVersionMajor = newVersion.split('.')[0];
+    const newVersionMinor = newVersion.split('.')[1];
+    const latestMajor = latestVersion.split('.')[0];
+    const latestMinor = latestVersion.split('.')[1];
+    if (
+      newVersionMajor > latestMajor ||
+      newVersionMajor === latestMajor && newVersionMinor > latestMinor
+    ) {
+      this.latest.set(schemaName, newVersion);
+      schema.set(LATEST, parsedNewSchema);
+    }
+  }
 
-  this.latest.set(schemaName, newVersion);
-  this.currentSchema = parsedNewSchema;
+  // this.currentSchema = parsedNewSchema; // TODO: what for?
 };
 
 Parser.prototype.use = function(
