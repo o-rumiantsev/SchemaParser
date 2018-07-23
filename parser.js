@@ -223,3 +223,9 @@ Parser.prototype._parseObject = function(
 
   return buffer;
 };
+
+Parser.prototype.getVersions = function(
+  schemaName
+) {
+  
+}
