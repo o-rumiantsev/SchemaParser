@@ -227,5 +227,11 @@ Parser.prototype._parseObject = function(
 Parser.prototype.getVersions = function(
   schemaName
 ) {
-  
+  const multiVersionSchemas = this.schemas.get(schemaName);
+  if (!multiVersionSchemas) throw new Error('Unknown schema');
+  const versionsIterator = multiVersionSchemas.keys();
+  const versionsArray = [...versionsIterator].filter(
+    version => version !== 'latest'
+  );
+  return versionsArray;
 }
