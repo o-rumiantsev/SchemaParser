@@ -26,6 +26,9 @@ const check = (expected, got) => {
 const parser = new Parser(schemas);
 parser.use('handshake');
 
+parser.updateSchema('handshake', {}, 'minor');
+parser.updateSchema('handshake', {}, 'patch');
+console.log(parser.getVersions('handshake'));
 
 const simple = () => {
   const handshake = {
