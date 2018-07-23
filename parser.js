@@ -33,15 +33,17 @@ module.exports = Parser;
 
 Parser.prototype.parseSchema = function(schema) {
   const byteUnit = /[0-9]*b$/;
+  const parsedSchema = {};
 
   for (const field in schema) {
     const value = schema[field];
     if (typeof value !== 'string') continue;
 
     if (value.match(byteUnit)) {
-      schema[field] = parseInt(value, '10'); // FIXME: change external reference variable
+      parsedSchema[field] = parseInt(value, '10');
     }
   }
+  return parsedSchema;
 };
 
 Parser.prototype.buildSchemasIndex = function(schemas) {
@@ -82,10 +84,10 @@ Parser.prototype.addSchema = function(
   const exists = this.schemas.has(schemaName);
   if (exists) throw new Error(`Schema ${schemaName} already exists`);
 
-  this.parseSchema(schema);
+  const parsedSchema = this.parseSchema(schema);
   const versions = new Map([
-    [version, schema],
-    [LATEST, schema]
+    [version, parsedSchema],
+    [LATEST, parsedSchema]
   ]);
 
   this.schemas.set(schemaName, versions);
@@ -107,12 +109,12 @@ Parser.prototype.updateSchema = function(
   const latest = this.latest.get(schemaName);
   const newVersion = updateVersion(latest, updateType);
 
-  this.parseSchema(newSchema);
-  schema.set(newVersion, newSchema);
-  schema.set(LATEST, newSchema);
+  const parsedNewSchema = this.parseSchema(newSchema);
+  schema.set(newVersion, parsedNewSchema);
+  schema.set(LATEST, parsedNewSchema);
 
   this.latest.set(schemaName, newVersion);
-  this.currentSchema = newSchema;
+  this.currentSchema = parsedNewSchema;
 };
 
 Parser.prototype.use = function(
