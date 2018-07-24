@@ -35,10 +35,16 @@ Parser.prototype.parseSchema = function(schema) {
 
   for (const field in schema) {
     const value = schema[field];
-    if (typeof value !== 'string') continue;
 
-    if (value.match(byteUnit)) {
+    if (typeof value === 'object') {
+      this.parseSchema(value);
+    } else if (
+      typeof value === 'string' &&
+      value.match(byteUnit)
+    ) {
       schema[field] = parseInt(value, '10');
+    } else {
+      schema[field] = value;
     }
   }
 };
@@ -58,6 +64,22 @@ Parser.prototype.buildSchemasIndex = function(schemas) {
   return new Map(schemas);
 };
 
+Parser.prototype.copySchema = function(schema) {
+  const copy = {};
+
+  for (const field in schema) {
+    const value = schema[field];
+
+    if (typeof value === 'object') {
+      copy[field] = this.copySchema(value);
+    } else {
+      copy[field] = value;
+    }
+  }
+
+  return copy;
+};
+
 Parser.prototype.getSchema = function(
   schemaName,
   version
@@ -68,7 +90,8 @@ Parser.prototype.getSchema = function(
   const versionedSchema = schema.get(version);
   if (!versionedSchema) throw new Error('Schema version not found');
 
-  return versionedSchema;
+  const copy = this.copySchema(versionedSchema);
+  return copy;
 };
 
 Parser.prototype.addSchema = function(
@@ -81,8 +104,10 @@ Parser.prototype.addSchema = function(
 
   const versions = new Map();
   this.parseSchema(schema);
-  versions.set(version, schema);
-  versions.set(LATEST, schema);
+
+  const copy = this.copySchema(schema);
+  versions.set(version, copy);
+  versions.set(LATEST, copy);
 
   this.schemas.set(schemaName, versions);
   this.latest.set(schemaName, version);
@@ -100,11 +125,15 @@ Parser.prototype.updateSchema = function(
   const newVersion = updateVersion(latest, updateType);
 
   this.parseSchema(newSchema);
-  schema.set(newVersion, newSchema);
-  schema.set(LATEST, newSchema);
+
+  const copy = this.copySchema(newSchema);
+  schema.set(newVersion, copy);
+  schema.set(LATEST, copy);
 
   this.latest.set(schemaName, newVersion);
-  this.currentSchema = newSchema;
+
+
+  this.currentSchema = copy;
 };
 
 Parser.prototype.use = function(
@@ -133,10 +162,7 @@ Parser.prototype.parse = function(
     : this._parseObject(schema, data);
 };
 
-Parser.prototype._parseBuffer = function(
-  schema,
-  buffer
-) {
+Parser.prototype._parseBuffer = (schema, buffer) => {
   const obj = {};
   let offset = 0;
 
@@ -168,10 +194,7 @@ Parser.prototype._parseBuffer = function(
   return obj;
 };
 
-Parser.prototype._parseObject = function(
-  schema,
-  data
-) {
+Parser.prototype._parseObject = (schema, data) => {
   const getSize = ([field, size]) => {
     if (typeof size === 'function') {
       const fn = size;
