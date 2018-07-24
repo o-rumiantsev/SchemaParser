@@ -145,7 +145,7 @@ Parser.prototype.use = function(
   schemaName,
   version = LATEST
 ) {
-  const schema = this.getSchema(schemaName, version);
+  const schema = [schemaName, version];
   this.currentSchema = schema;
 };
 
@@ -157,7 +157,7 @@ Parser.prototype.parse = function(
   let schema = null;
 
   if (!schemaName) {
-    schema = this.currentSchema;
+    schema = this.getSchema(...this.currentSchema);
   } else {
     schema = this.getSchema(schemaName, version);
   }
