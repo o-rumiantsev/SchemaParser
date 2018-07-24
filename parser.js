@@ -258,3 +258,35 @@ Parser.prototype.getVersions = function(
   );
   return versionsArray;
 };
+
+Parser.prototype.deleteSchema = function(
+  schemaName,
+  versions
+) {
+  const schema = this.schemas.get(schemaName);
+  const latestVersion = this.latest.get(schemaName);
+  if (!versions) {
+    this.latest.delete(schemaName);
+    this.schemas.delete(schemaName);
+  } else if (versions instanceof Array) {
+    for (const version in versions) {
+      if (!schema.has(version)) {
+        throw new Error(`Unknown version ${version}`);
+      }
+      schema.delete(version);
+      if (latestVersion === version) {
+        this.latest.set(schemaName, DEFAULT_VERSION);
+        // TODO: how we can discover the correct latest version now?
+      }
+    }
+  } else {
+    if (!schema.has(versions)) {
+      throw new Error(`Unknown version ${versions}`);
+    }
+    schema.delete(versions);
+    if (latestVersion === versions) {
+      this.latest.set(schemaName, DEFAULT_VERSION);
+      // TODO: how we can discover the correct latest version now?
+    }
+  }
+};
