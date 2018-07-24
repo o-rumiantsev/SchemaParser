@@ -2,7 +2,7 @@
   "name": "schemaparser",
   "version": "0.1.5",
   "description": "Parse data into buffer and back using multiversional binary schema",
-  "main": "parser.js",
+  "main": "schemaparser.js",
   "directories": {
     "test": "test"
   },
