@@ -229,7 +229,7 @@ Parser.prototype._parseBuffer = function(
   schema,
   buffer
 ) {
-  const obj = {}; // TODO: name
+  const parsedObject = {};
   let offset = 0;
 
   for (const field in schema) {
@@ -237,70 +237,71 @@ Parser.prototype._parseBuffer = function(
 
     if (typeof size === 'function') {
       const fn = size;
-      const len = fn(obj);
+      const len = fn(parsedObject);
       const data = buffer.slice(offset, offset + len);
-      obj[field] = data.toString();
+      parsedObject[field] = data.toString();
       offset += len;
     } else if (typeof size === 'string') {
-      const len = obj[size];
-      // FIXME: if (!len) {...}
+      const len = parsedObject[size];
+      if (!len) throw new Error(`Unknown schema field ${size}`);
       const data = buffer.slice(offset, offset + len);
-      obj[field] = data.toString();
+      parsedObject[field] = data.toString();
       offset += len;
     } else if (size > INT_32) {
       const data = buffer.slice(offset, offset + size);
-      obj[field] = data.toString();
+      parsedObject[field] = data.toString();
       offset += size;
     } else {
       const data = buffer.readIntLE(offset, size);
-      obj[field] = data;
+      parsedObject[field] = data;
       offset += size;
     }
   }
 
-  return obj;
+  return parsedObject;
 };
 
 Parser.prototype._parseObject = function(
   schema,
   data
 ) {
-  const getSize = ([_, size]) => {
-    // TODO: Validation!
+  const length = 0;
+  const sizes = {};
+
+  for (const field in schema) {
+    const size = schema[field];
     if (typeof size === 'function') {
       const fn = size;
-      return fn(data);
+      const sizeInt = fn(data);
+      sizes[field] = sizeInt;
+      return sizeInt;
     } else if (typeof size === 'string') {
-      return data[size];
+      const sizeInt = data[size];
+      if (sizeInt) {
+        sizes[field] = sizeInt;
+        return sizeInt;
+      } else {
+        throw new Error(`Unknown schema field ${size}`);
+      }
     } else {
+      sizes[field] = size;
       return size;
     }
-  };
+  }
 
-  const bytes = Object
-    .entries(schema)
-    .map(getSize);
-
-  const length = bytes.reduce((acc, cur) => acc += cur);
-  const buffer = Buffer.alloc(length);
+  const buffer = Buffer.allocUnsafe(length);
   let offset = 0;
 
   for (const field in data) {
     const value = data[field];
-    let size = schema[field];
+    const size = schema[field];
 
-    if (typeof size === 'function') {
-      const fn = size;
-      size = fn(data);
-    }
-
-    if (typeof size === 'string' || size > INT_32) {
+    if (size > INT_32) {
       const string = value.toString();
       offset += buffer.write(string, offset);
     } else {
-      offset = buffer.writeIntLE(value, offset, size);
+      offset += buffer.writeIntLE(value, offset, size);
     }
   }
-
   return buffer;
 };
