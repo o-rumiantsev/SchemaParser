@@ -268,6 +268,9 @@ Parser.prototype.deleteSchema = function(
   if (!versions) {
     this.latest.delete(schemaName);
     this.schemas.delete(schemaName);
+    if (this.currentSchema[0] === schemaName) {
+      this.currentSchema = null;
+    }
   } else if (versions instanceof Array) {
     for (const version in versions) {
       if (!schema.has(version)) {
@@ -278,6 +281,12 @@ Parser.prototype.deleteSchema = function(
         this.latest.set(schemaName, DEFAULT_VERSION);
         // TODO: how we can discover the correct latest version now?
       }
+      if (
+        this.currentSchema[0] === schemaName ||
+        this.currentSchema[1] === version
+      ) {
+        this.currentSchema = null;
+      }
     }
   } else {
     if (!schema.has(versions)) {
@@ -287,6 +296,12 @@ Parser.prototype.deleteSchema = function(
     if (latestVersion === versions) {
       this.latest.set(schemaName, DEFAULT_VERSION);
       // TODO: how we can discover the correct latest version now?
+    }
+    if (
+      this.currentSchema[0] === schemaName ||
+      this.currentSchema[1] === versions
+    ) {
+      this.currentSchema = null;
     }
   }
 };
