@@ -38,7 +38,7 @@ Parser.prototype.parseSchema = function(schema) {
   for (const field in schema) {
     const value = schema[field];
     if (typeof value !== 'string') continue;
-
+    
     if (value.match(byteUnit)) {
       parsedSchema[field] = parseInt(value, '10');
     }
@@ -63,6 +63,22 @@ Parser.prototype.buildSchemasIndex = function(schemas) {
   return new Map(schemas);
 };
 
+Parser.prototype.copySchema = function(schema) {
+  const copy = {};
+
+  for (const field in schema) {
+    const value = schema[field];
+
+    if (typeof value === 'object') {
+      copy[field] = this.copySchema(value);
+    } else {
+      copy[field] = value;
+    }
+  }
+
+  return copy;
+};
+
 Parser.prototype.getSchema = function(
   schemaName,
   version = LATEST
@@ -73,7 +89,8 @@ Parser.prototype.getSchema = function(
   const versionedSchema = schema.get(version);
   if (!versionedSchema) throw new Error('Schema version not found');
 
-  return versionedSchema;
+  const copy = this.copySchema(versionedSchema);
+  return copy;
 };
 
 Parser.prototype.addSchema = function(
@@ -260,6 +277,7 @@ Parser.prototype._parseBuffer = function(
 
   return parsedObject;
 };
+
 
 Parser.prototype._parseObject = function(
   schema,
