@@ -7,12 +7,6 @@ const extensions = {
   stream: require('./lib/stream.js')
 };
 
-Parser.prototype.extend = function(
-  extensionName
-) {
-  const extension = extensions[extensionName];
-  extension(this);
-  return this;
-};
+Object.assign(Parser.prototype, extensions);
 
 module.exports = Parser;
