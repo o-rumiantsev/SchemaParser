@@ -23,7 +23,7 @@ const check = (expected, got) => {
 
 // Test
 
-const parser = new Parser(schemas);
+let parser = new Parser(schemas);
 parser.use('handshake');
 
 const parserCore = () => {
@@ -92,7 +92,7 @@ const parserCore = () => {
 };
 
 const extendedWithVersions = () => {
-  parser.extend('versions');
+  parser = parser.versions();
 
   const withSchemaUpdate = () => {
     const newSchema = {
